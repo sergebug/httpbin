@@ -27,6 +27,7 @@ from flask import (
     abort,
 )
 from six.moves import range as xrange
+from werkzeug.contrib.cache import SimpleCache
 from werkzeug.datastructures import WWWAuthenticate, MultiDict
 from werkzeug.http import http_date
 from werkzeug.wrappers import BaseResponse
@@ -67,6 +68,8 @@ ENV_COOKIES = (
     "__utma",
     "__utmb",
 )
+
+anything_cache = SimpleCache()
 
 
 def jsonify(*args, **kwargs):
@@ -393,22 +396,26 @@ def view_anything(anything=None):
       - application/json
     responses:
       200:
-        description: Anything passed in request
+        description: Anything passed in request. requests cached by <path:anything>
     """
-
-    return jsonify(
-        get_dict(
-            "url",
-            "args",
-            "headers",
-            "origin",
-            "method",
-            "form",
-            "data",
-            "files",
-            "json",
+    if anything is not None and anything_cache.has(anything):
+        return anything_cache.get(anything)
+    else:
+        rv = jsonify(
+            get_dict(
+                "url",
+                "args",
+                "headers",
+                "origin",
+                "method",
+                "form",
+                "data",
+                "files",
+                "json",
+            )
         )
-    )
+        anything_cache.set(anything, rv, anything_cache.default_timeout)
+    return rv
 
 
 @app.route("/post", methods=("POST",))
@@ -853,7 +860,7 @@ def view_forms_post():
     return render_template("forms-post.html")
 
 
-@app.route("/cookies/set/<name>/<value>")
+@app.route("/cookies/set/<name>/<value>", methods=["GET", "POST", "PUT"])
 def set_cookie(name, value):
     """Sets a cookie and redirects to cookie list.
     ---

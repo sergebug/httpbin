@@ -167,6 +167,13 @@ class HttpbinTestCase(unittest.TestCase):
         self.assertEqual(data['method'], 'GET')
         self.assertTrue(response.data.endswith(b'\n'))
 
+    def test_anything_cached(self):
+        response = self.app.post('/anything/foo/bar', data=dict(data_key="data-value"))
+        self.assertEqual(response.status_code, 200)
+        response = self.app.get('/anything/foo/bar')
+        data = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(data['form'], dict(data_key="data-value"))
+
     def test_base64(self):
         greeting = u'Здравствуй, мир!'
         b64_encoded = _string_to_base64(greeting)
