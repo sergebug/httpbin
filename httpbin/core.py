@@ -142,7 +142,7 @@ template = {
             "name": "Anything",
             "description": "Returns anything that is passed to request",
         },
-        {"name": "bins", "description": "returns a list of cached requests to anything"},
+        {"name": "Bins", "description": "returns a list of cached requests to Anything"},
     ],
 }
 
@@ -423,7 +423,7 @@ def view_bins(anything=None):
     """Returns history of requests.
     ---
     tags:
-      - Anything
+      - Bins
     produces:
       - application/json
     responses:
