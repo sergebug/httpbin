@@ -69,7 +69,7 @@ ENV_COOKIES = (
     "__utmb",
 )
 
-anything_cache = SimpleCache()
+bin_cache = SimpleCache()
 
 
 def jsonify(*args, **kwargs):
@@ -142,6 +142,7 @@ template = {
             "name": "Anything",
             "description": "Returns anything that is passed to request",
         },
+        {"name": "bins", "description": "returns a list of cached requests to anything"},
     ],
 }
 
@@ -381,7 +382,6 @@ def view_get():
 
     return jsonify(get_dict("url", "args", "headers", "origin"))
 
-
 @app.route("/anything", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "TRACE"])
 @app.route(
     "/anything/<path:anything>",
@@ -398,23 +398,40 @@ def view_anything(anything=None):
       200:
         description: Anything passed in request. requests cached by <path:anything>
     """
-    if anything is not None and anything_cache.has(anything):
-        return anything_cache.get(anything)
-    else:
-        rv = jsonify(
-            get_dict(
-                "url",
-                "args",
-                "headers",
-                "origin",
-                "method",
-                "form",
-                "data",
-                "files",
-                "json",
-            )
+    rv = get_dict(
+            "url",
+            "args",
+            "headers",
+            "origin",
+            "method",
+            "form",
+            "data",
+            "files",
+            "json",
         )
-        anything_cache.set(anything, rv, anything_cache.default_timeout)
+    cache_key = request.path
+    if bin_cache.has(cache_key):
+        cached_list = bin_cache.get(cache_key)
+    else:
+        cached_list = list()
+    cached_list.insert(0, rv)
+    bin_cache.set(cache_key, cached_list)
+    return jsonify(rv)
+
+@app.route("/bins/<path:anything>")
+def view_bins(anything=None):
+    """Returns history of requests.
+    ---
+    tags:
+      - Anything
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Anything passed in request. requests cached by <path:anything>
+    """
+    bins = bin_cache.get("/" + anything)
+    rv = jsonify(bins=bins)
     return rv
 
 
