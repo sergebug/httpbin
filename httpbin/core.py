@@ -392,11 +392,17 @@ def view_anything(anything=None):
     ---
     tags:
       - Anything
+    parameters:
+      - in: path
+        name: anything
+        type: path
+        default: foo/bar
+        description: empty or sub path to anything
     produces:
       - application/json
     responses:
       200:
-        description: Anything passed in request. requests cached by <path:anything>
+        description: Anything passed in request.
     """
     rv = get_dict(
             "url",
@@ -424,6 +430,12 @@ def view_bins(anything=None):
     ---
     tags:
       - Bins
+    parameters:
+      - in: path
+        name: anything
+        type: path
+        default: anything/foo/bar
+        description: path to previously called anything URL
     produces:
       - application/json
     responses:
